@@ -283,6 +283,8 @@ function showMenu(data) {
 
                     <img
                         class="wine-image"
+                        loading="lazy"
+                        decoding="async"
                         data-image="${imageSrc}"
                         src="${imageSrc}"
                         alt="${item["이름"]}"
