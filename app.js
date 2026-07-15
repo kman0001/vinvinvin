@@ -57,12 +57,6 @@ function showNotice(data){
 
     const warnings =
         data.filter(v=>v["항목"]==="주의");
-
-    const warnings =
-        data.filter(v=>v["항목"]==="이벤트");
-    
-    const warnings =
-        data.filter(v=>v["항목"]==="기타");
     
     let html = `
         <div class="notice-box">
