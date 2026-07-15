@@ -75,59 +75,73 @@ function getFlag(country) {
 
 function showNotice(data){
 
-    const notice=document.getElementById("notice");
+    const notice = document.getElementById("notice");
 
     if(!notice || !data.length) return;
 
-    data.sort((a,b)=>
-        Number(a["정렬"])-Number(b["정렬"])
-    );
+    data = data
+        .filter(item => String(item["내용"]).trim() !== "")
+        .sort((a,b)=>Number(a["정렬"])-Number(b["정렬"]));
 
     const title =
         data.find(v=>v["항목"]==="제목")?.["내용"] || "안내";
 
-    const guides =
-        data.filter(v=>v["항목"]==="안내");
-
-    const warnings =
-        data.filter(v=>v["항목"]==="주의");
-    
     let html = `
         <div class="notice-box">
 
             <div class="notice-title">${title}</div>
-
-            <ul class="notice-list">
     `;
 
-    guides.forEach(item=>{
+    const sections = [
+        {
+            type: "안내",
+            title: "",
+            icon: "•"
+        },
+        {
+            type: "주의",
+            title: "⚠️ 주의",
+            icon: "•"
+        },
+        {
+            type: "이벤트",
+            title: "🎉 이벤트",
+            icon: "•"
+        },
+        {
+            type: "기타",
+            title: "ℹ️ 기타",
+            icon: "•"
+        }
+    ];
 
-        html += `<li>• ${item["내용"]}</li>`;
+    sections.forEach(section => {
 
-    });
+        const items = data.filter(v => v["항목"] === section.type);
 
-    html += `</ul>`;
+        if(!items.length) return;
 
-    if(warnings.length){
+        if(section.title){
+            html += `
+                <div class="notice-warning">
+                    <h3>${section.title}</h3>
+                    <ul class="notice-list">
+            `;
+        }else{
+            html += `<ul class="notice-list">`;
+        }
 
-        html += `
-
-            <div class="notice-warning">
-
-                <h3>⚠️ 주의</h3>
-
-                <ul class="notice-list">
-        `;
-
-        warnings.forEach(item=>{
-
-            html += `<li>${item["내용"]}</li>`;
-
+        items.forEach(item=>{
+            html += `<li>${section.icon} ${item["내용"]}</li>`;
         });
 
-        html += `</ul></div>`;
+        html += `</ul>`;
 
-    }
+        if(section.title){
+            html += `</div>`;
+        }
+
+    });
 
     html += `</div>`;
 
