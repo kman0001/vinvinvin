@@ -433,22 +433,3 @@ function showMenu(data) {
 
 }
 
-const languageSelect = document.getElementById("language-select");
-
-languageSelect.addEventListener("change", () => {
-
-    const lang = languageSelect.value;
-
-    if(!lang) return;
-
-    const url =
-        "https://translate.google.com/translate" +
-        "?sl=ko" +
-        "&tl=" + lang +
-        "&u=" + encodeURIComponent(location.href);
-
-    window.open(url, "_blank");
-
-    languageSelect.value = "";
-
-});
