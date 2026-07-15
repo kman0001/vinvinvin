@@ -73,6 +73,18 @@ function getFlag(country) {
     return flags[country] || "🍷";
 }
 
+function getTypeIcon(category) {
+    switch (category) {
+        case "맥주":
+            return "🍺";
+        case "위스키":
+        case "꼬냑":
+            return "🥃";
+        default:
+            return "🍇";
+    }
+}
+
 function showNotice(data){
 
     const notice = document.getElementById("notice");
@@ -263,11 +275,12 @@ function showMenu(data) {
             const info = printDesc.split("/").map(v => v.trim());
 
             const country = info[0] || "";
-            const grape = info[1] || "";
+            const variety = info[1] || "";
             const abv = info[2] || "";
             const extra = info[3] || "";
 
             const flag = getFlag(country);
+            const typeIcon = getTypeIcon(category);
 
             let extraIcon = "📌";
 
