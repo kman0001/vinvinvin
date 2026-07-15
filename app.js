@@ -164,6 +164,7 @@ function showMenu(data) {
 
                     <img
                         class="wine-image"
+                        data-image="${imageSrc}"
                         src="${imageSrc}"
                         alt="${item["이름"]}"
                         onerror="this.src='images/no-image.jpg'"
@@ -258,5 +259,55 @@ function showMenu(data) {
         });
     
         sections.forEach(section => observer.observe(section));
+
+        // ==========================
+        // Lightbox
+        // ==========================
+        
+        const lightbox = document.getElementById("lightbox");
+        const lightboxImage = document.getElementById("lightbox-image");
+        const closeButton = document.querySelector(".lightbox-close");
+        
+        document.querySelectorAll(".wine-image").forEach(image=>{
+        
+            image.addEventListener("click",()=>{
+        
+                lightboxImage.src=image.dataset.image;
+        
+                lightbox.classList.add("show");
+        
+            });
+        
+        });
+        
+        function closeLightbox(){
+        
+            lightbox.classList.remove("show");
+        
+            lightboxImage.src="";
+        
+        }
+        
+        closeButton.onclick=closeLightbox;
+        
+        lightbox.onclick=(e)=>{
+        
+            if(e.target===lightbox){
+        
+                closeLightbox();
+        
+            }
+        
+        };
+        
+        document.addEventListener("keydown",(e)=>{
+        
+            if(e.key==="Escape"){
+        
+                closeLightbox();
+        
+            }
+        
+        });
 
 }
