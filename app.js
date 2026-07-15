@@ -225,38 +225,38 @@ function showMenu(data) {
 
     });
 
-    // ==========================
-    // 현재 카테고리 활성화
-    // ==========================
-
-    const sections = document.querySelectorAll(".category");
-    const navButtons = document.querySelectorAll(".nav-button");
-
-    const observer = new IntersectionObserver((entries) => {
-
-        entries.forEach(entry => {
-
-            if (!entry.isIntersecting) return;
-
-            const id = entry.target.id.replace("category-", "");
-
-            navButtons.forEach(button => {
-
-                button.classList.toggle(
-                    "active",
-                    button.dataset.category === id
-                );
-
+        // ==========================
+        // 현재 카테고리 활성화
+        // ==========================
+    
+        const sections = document.querySelectorAll(".category");
+        const navButtons = document.querySelectorAll(".nav-button");
+    
+        const observer = new IntersectionObserver((entries) => {
+    
+            entries.forEach(entry => {
+    
+                if (!entry.isIntersecting) return;
+    
+                const id = entry.target.id.replace("category-", "");
+    
+                navButtons.forEach(button => {
+    
+                    button.classList.toggle(
+                        "active",
+                        button.dataset.category === id
+                    );
+    
+                });
+    
             });
-
+    
+        }, {
+            root: null,
+            rootMargin: "-25% 0px -60% 0px",
+            threshold: 0
         });
-
-    }, {
-        root: null,
-        rootMargin: "-25% 0px -60% 0px",
-        threshold: 0
-    });
-
-    sections.forEach(section => observer.observe(section));
+    
+        sections.forEach(section => observer.observe(section));
 
 }
