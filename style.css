@@ -87,16 +87,6 @@ header h1{
 
 }
 
-/* 앞으로 JS에서 active 클래스 사용 */
-
-.nav-button.active{
-
-    background:#7d0000;
-
-    color:#fff;
-
-}
-
 /* ===========================
    Main
 =========================== */
