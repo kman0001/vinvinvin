@@ -1,12 +1,21 @@
-const API = "https://script.google.com/macros/s/AKfycbw96mCdSKeYrjwTZpzArHQByIWsAAs0OUlejB2DHNXEDqFSS1bl0VU4isIUjS0SmSWtcA/exec";
+const API = "https://script.google.com/macros/s/AKfycbxrynnbzob7qwRG2wPzpyWbNAy4ZSxpvTiK0s3uFBFUcwjDg5PZbfBKaiWHIZ8W__mIJg/exec";
 
 fetch(API)
     .then(response => response.json())
-    .then(showMenu)
+    .then(data => {
+
+        showNotice(data.notice);
+
+        showMenu(data.menu);
+
+    })
     .catch(error => {
+
         console.error(error);
+
         document.getElementById("menu").innerHTML =
             "<p>메뉴를 불러오지 못했습니다.</p>";
+
     });
 
 function getFlag(country) {
@@ -28,6 +37,68 @@ function getFlag(country) {
     };
 
     return flags[country] || "🍷";
+}
+
+function showNotice(data){
+
+    const notice=document.getElementById("notice");
+
+    if(!notice || !data.length) return;
+
+    data.sort((a,b)=>
+        Number(a["정렬"])-Number(b["정렬"])
+    );
+
+    const title =
+        data.find(v=>v["항목"]==="제목")?.["내용"] || "안내";
+
+    const guides =
+        data.filter(v=>v["항목"]==="안내");
+
+    const warnings =
+        data.filter(v=>v["항목"]==="주의");
+
+    let html = `
+        <div class="notice-box">
+
+            <div class="notice-title">${title}</div>
+
+            <ul class="notice-list">
+    `;
+
+    guides.forEach(item=>{
+
+        html += `<li>• ${item["내용"]}</li>`;
+
+    });
+
+    html += `</ul>`;
+
+    if(warnings.length){
+
+        html += `
+
+            <div class="notice-warning">
+
+                <h3>⚠️ 주의</h3>
+
+                <ul class="notice-list">
+        `;
+
+        warnings.forEach(item=>{
+
+            html += `<li>${item["내용"]}</li>`;
+
+        });
+
+        html += `</ul></div>`;
+
+    }
+
+    html += `</div>`;
+
+    notice.innerHTML = html;
+
 }
 
 function showMenu(data) {
