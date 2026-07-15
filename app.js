@@ -202,11 +202,31 @@ function showMenu(data) {
         // 정렬
         grouped[category].sort((a, b) => {
 
+            const availableA =
+                String(a["판매 여부"]).toUpperCase() !== "FALSE";
+        
+            const availableB =
+                String(b["판매 여부"]).toUpperCase() !== "FALSE";
+        
+            // 판매 중인 메뉴를 먼저 표시
+            if (availableA !== availableB) {
+                return availableA ? -1 : 1;
+            }
+        
+            // 가격 오름차순
+            const priceA = Number(a["가격"]) || 0;
+            const priceB = Number(b["가격"]) || 0;
+        
+            if (priceA !== priceB) {
+                return priceA - priceB;
+            }
+        
+            // 가격이 같으면 기존 정렬값 사용
             const orderA = Number(a["정렬"]) || 9999;
             const orderB = Number(b["정렬"]) || 9999;
-
+        
             return orderA - orderB;
-
+        
         });
 
         // ==========================
