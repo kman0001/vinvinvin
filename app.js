@@ -344,7 +344,7 @@ function showMenu(data) {
 
                             ${variety ? `<span class="tag">${typeIcon} ${variety}</span>` : ""}
 
-                            ${abv ? `<span class="tag">🍷 ${abv}</span>` : ""}
+                            ${abv ? `<span class="tag">💧 ${abv}</span>` : ""}
 
                             ${extra ? `<span class="tag">${extraIcon} ${extra}</span>` : ""}
 
