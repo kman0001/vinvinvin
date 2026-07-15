@@ -1,0 +1,228 @@
+const API = "https://script.google.com/macros/s/AKfycbw96mCdSKeYrjwTZpzArHQByIWsAAs0OUlejB2DHNXEDqFSS1bl0VU4isIUjS0SmSWtcA/exec";
+
+fetch(API)
+    .then(response => response.json())
+    .then(showMenu)
+    .catch(error => {
+        console.error(error);
+        document.getElementById("menu").innerHTML =
+            "<p>메뉴를 불러오지 못했습니다.</p>";
+    });
+
+function getFlag(country) {
+    const flags = {
+        "이탈리아": "🇮🇹",
+        "프랑스": "🇫🇷",
+        "스페인": "🇪🇸",
+        "칠레": "🇨🇱",
+        "미국": "🇺🇸",
+        "호주": "🇦🇺",
+        "뉴질랜드": "🇳🇿",
+        "독일": "🇩🇪",
+        "포르투갈": "🇵🇹",
+        "아르헨티나": "🇦🇷",
+        "벨기에": "🇧🇪",
+        "네덜란드": "🇳🇱",
+        "스코틀랜드": "🏴",
+        "일본": "🇯🇵"
+    };
+
+    return flags[country] || "🍷";
+}
+
+function showMenu(data) {
+
+    const menu = document.getElementById("menu");
+    const nav = document.getElementById("category-nav");
+
+    menu.innerHTML = "";
+    nav.innerHTML = "";
+
+    const categoryOrder = [
+        "잔와인",
+        "레드",
+        "화이트",
+        "스파클링",
+        "맥주",
+        "위스키",
+        "꼬냑"
+    ];
+
+    // 종류별 그룹화
+    const grouped = {};
+
+    data.forEach(item => {
+
+        const category = item["종류"];
+
+        if (!grouped[category]) {
+            grouped[category] = [];
+        }
+
+        grouped[category].push(item);
+
+    });
+
+    // 카테고리 생성
+    categoryOrder.forEach(category => {
+
+        if (!grouped[category]) return;
+
+        // 정렬
+        grouped[category].sort((a, b) => {
+
+            const orderA = Number(a["정렬"]) || 9999;
+            const orderB = Number(b["정렬"]) || 9999;
+
+            return orderA - orderB;
+
+        });
+
+        // ==========================
+        // Navigation Button
+        // ==========================
+
+        const button = document.createElement("button");
+
+        button.className = "nav-button";
+        button.textContent = category;
+        button.dataset.category = category;
+
+        button.onclick = () => {
+
+            document
+                .getElementById(`category-${category}`)
+                .scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+
+        };
+
+        nav.appendChild(button);
+
+        // ==========================
+        // Section
+        // ==========================
+
+        const section = document.createElement("section");
+
+        section.id = `category-${category}`;
+        section.className = "category";
+
+        section.innerHTML = `<h2>${category}</h2>`;
+
+        // ==========================
+        // Cards
+        // ==========================
+
+        grouped[category].forEach(item => {
+
+            const card = document.createElement("div");
+            card.className = "card";
+
+            const imageFile = (item["사진"] || "").trim();
+
+            const isExternal =
+                /^(https?:)?\/\//i.test(imageFile);
+            
+            const imageSrc = isExternal
+                ? imageFile
+                : `images/${imageFile || "no-image.jpg"}`;
+
+            const printDesc = item["설명 (인쇄용)"] || "";
+            const webDesc = item["설명 (웹용)"] || "";
+            const price = Number(item["가격"]) || 0;
+
+            const recommended =
+                String(item["추천"]).toUpperCase() === "TRUE";
+
+            const available =
+                String(item["판매 여부"]).toUpperCase() !== "FALSE";
+
+            // 설명 분리
+            const info = printDesc.split("/").map(v => v.trim());
+
+            const country = info[0] || "";
+            const grape = info[1] || "";
+            const abv = info[2] || "";
+            const extra = info[3] || "";
+
+            const flag = getFlag(country);
+
+            let extraIcon = "📌";
+
+            if (/^\d{4}$/.test(extra) || extra.toUpperCase() === "NV") {
+                extraIcon = "📅";
+            } else if (/ml/i.test(extra)) {
+                extraIcon = "🥂";
+            }
+
+            card.innerHTML = `
+
+                <div class="card-layout">
+
+                    <img
+                        class="wine-image"
+                        src="${imageSrc}"
+                        alt="${item["이름"]}"
+                        onerror="this.src='images/no-image.jpg'"
+                    >
+
+                    <div class="wine-info">
+
+                        <div class="name">
+
+                            ${item["이름"]}
+
+                            ${
+                                recommended
+                                ? `<span class="badge">추천</span>`
+                                : ""
+                            }
+
+                        </div>
+
+                        <div class="wine-meta">
+
+                            ${country ? `<span class="tag">${flag} ${country}</span>` : ""}
+
+                            ${grape ? `<span class="tag">🍇 ${grape}</span>` : ""}
+
+                            ${abv ? `<span class="tag">🍷 ${abv}</span>` : ""}
+
+                            ${extra ? `<span class="tag">${extraIcon} ${extra}</span>` : ""}
+
+                        </div>
+
+                        ${
+                            webDesc
+                                ? `<div class="web-desc">${webDesc}</div>`
+                                : ""
+                        }
+
+                        <div class="price">
+
+                            ${
+                                available
+                                    ? `₩${price.toLocaleString("ko-KR")}`
+                                    : `<span class="soldout">SOLD OUT</span>`
+                            }
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            `;
+
+            section.appendChild(card);
+
+        });
+
+        menu.appendChild(section);
+
+    });
+
+}
