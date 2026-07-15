@@ -322,7 +322,7 @@ function showMenu(data) {
 
                             ${country ? `<span class="tag">${flag} ${country}</span>` : ""}
 
-                            ${grape ? `<span class="tag">🍇 ${grape}</span>` : ""}
+                            ${variety ? `<span class="tag">${typeIcon} ${variety}</span>` : ""}
 
                             ${abv ? `<span class="tag">🍷 ${abv}</span>` : ""}
 
