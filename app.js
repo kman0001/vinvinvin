@@ -170,7 +170,7 @@ function showMenu(data) {
     nav.innerHTML = "";
 
     const categoryOrder = [
-        "잔와인",
+        "글라스 와인",
         "레드",
         "화이트",
         "스파클링",
