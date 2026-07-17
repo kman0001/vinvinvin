@@ -79,11 +79,14 @@ header h1{
 
 }
 
-.nav-button:hover{
+@media (hover: hover) and (pointer: fine) {
 
-    background:#7d0000;
+    .nav-button:hover{
 
-    color:#fff;
+        background:#7d0000;
+        color:#fff;
+
+    }
 
 }
 
