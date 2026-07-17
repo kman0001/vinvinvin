@@ -282,15 +282,15 @@ function showMenu(data) {
                 ? imageFile
                 : `images/${imageFile || "no-image.jpg"}`;
 
-            const printDesc = item["설명 (인쇄용)"] || "";
-            const webDesc = item["설명 (웹용)"] || "";
+            const printDesc = item["주요 정보"] || "";
+            const webDesc = item["설명"] || "";
             const price = Number(item["가격"]) || 0;
 
             const recommended =
-                String(item["추천"]).toUpperCase() === "TRUE";
+                String(item["추천"]).toUpperCase() === "추천";
 
             const available =
-                String(item["판매 여부"]).toUpperCase() !== "FALSE";
+                String(item["판매 여부"]).toUpperCase() !== "품절";
 
             // 설명 분리
             const info = printDesc.split("/").map(v => v.trim());
