@@ -384,36 +384,45 @@ function showMenu(data) {
         // ==========================
         // 현재 카테고리 활성화
         // ==========================
-    
+        
         const sections = document.querySelectorAll(".category");
         const navButtons = document.querySelectorAll(".nav-button");
-    
-        const observer = new IntersectionObserver((entries) => {
-    
-            entries.forEach(entry => {
-    
-                if (!entry.isIntersecting) return;
-    
-                const id = entry.target.id.replace("category-", "");
-    
-                navButtons.forEach(button => {
-    
-                    button.classList.toggle(
-                        "active",
-                        button.dataset.category === id
-                    );
-    
-                });
-    
+        
+        function updateActiveCategory() {
+        
+            const navHeight =
+                document.getElementById("category-nav").offsetHeight;
+        
+            const scrollPosition =
+                window.scrollY + navHeight + 30;
+        
+            let currentCategory = sections[0];
+        
+            sections.forEach(section => {
+        
+                if (section.offsetTop <= scrollPosition) {
+                    currentCategory = section;
+                }
+        
             });
-    
-        }, {
-            root: null,
-            rootMargin: "-25% 0px -60% 0px",
-            threshold: 0
-        });
-    
-        sections.forEach(section => observer.observe(section));
+        
+            navButtons.forEach(button => {
+        
+                button.classList.toggle(
+                    "active",
+                    button.dataset.category ===
+                    currentCategory.id.replace("category-", "")
+                );
+        
+            });
+        
+        }
+        
+        window.addEventListener("scroll", updateActiveCategory);
+        
+        window.addEventListener("resize", updateActiveCategory);
+        
+        updateActiveCategory();
 
         // ==========================
         // Lightbox
