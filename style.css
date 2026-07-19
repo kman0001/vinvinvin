@@ -270,6 +270,7 @@ main{
 .profile-bar{
     display:inline-flex;
     gap:1px;
+    letter-spacing:-1px;
 }
 
 .profile-bar .fill,
@@ -360,7 +361,16 @@ main{
         font-size:30px;
     }
 
-    .web-desc{
+    .wine-profile{
+        justify-content:center;
+    }
+
+    .profile-tag{
+        font-size:14px;
+        padding:6px 12px;
+    }
+   
+   .web-desc{
         font-size:16px;
     }
 
