@@ -96,8 +96,11 @@ function renderWineProfile(profile){
 
     const order=["당도","산도","바디","타닌"];
     const values={};
+
     profile.forEach(item=>{
+
         const match=item.match(/(당도|산도|바디|타닌)\s*(\d)/);
+
         if(match){
             values[match[1]]=Number(match[2]);
         }
@@ -105,15 +108,20 @@ function renderWineProfile(profile){
     });
 
     return order.map(label=>{
+
         const level=values[label];
+
         if(level===undefined) return "";
+
+        const bars=Array.from({length:5},(_,i)=>
+            `<span class="bar ${i<level?"fill":"empty"}"></span>`
+        ).join("");
+
         return `
             <span class="profile-tag">
-                <span>${icons[label]}</span>
+                <span class="profile-icon">${icons[label]}</span>
                 <span class="profile-label">${label}</span>
-                <span class="profile-bar">
-                    <span class="fill">${"▰".repeat(level)}</span><span class="empty">${"▱".repeat(5-level)}</span>
-                </span>
+                <span class="profile-bars">${bars}</span>
             </span>
         `;
 
