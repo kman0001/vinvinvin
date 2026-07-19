@@ -85,6 +85,42 @@ function getTypeIcon(category) {
     }
 }
 
+function renderWineProfile(profile){
+
+    const icons={
+        "당도":"🍬",
+        "산도":"🍋",
+        "바디":"💪",
+        "타닌":"🌿"
+    };
+
+    const order=["당도","산도","바디","타닌"];
+    const values={};
+    profile.forEach(item=>{
+        const match=item.match(/(당도|산도|바디|타닌)\s*(\d)/);
+        if(match){
+            values[match[1]]=Number(match[2]);
+        }
+
+    });
+
+    return order.map(label=>{
+        const level=values[label];
+        if(level===undefined) return "";
+        return `
+            <span class="profile-tag">
+                <span>${icons[label]}</span>
+                <span class="profile-label">${label}</span>
+                <span class="profile-bar">
+                    <span class="fill">${"▰".repeat(level)}</span><span class="empty">${"▱".repeat(5-level)}</span>
+                </span>
+            </span>
+        `;
+
+    }).join("");
+
+}
+
 function showNotice(data){
 
     const notice = document.getElementById("notice");
@@ -282,23 +318,22 @@ function showMenu(data) {
                 ? imageFile
                 : `images/${imageFile || "no-image.jpg"}`;
 
-            const printDesc = item["주요 정보 1"] || "";
-            const webDesc = item["설명"] || "";
-            const price = Number(item["가격"]) || 0;
-
-            const recommended =
-                String(item["추천"]).toUpperCase() === "추천";
-
-            const available =
-                String(item["판매 여부"]).toUpperCase() !== "품절";
-
-            // 설명 분리
-            const info = printDesc.split("/").map(v => v.trim());
-
-            const country = info[0] || "";
-            const variety = info[1] || "";
-            const abv = info[2] || "";
-            const extra = info[3] || "";
+            const printDesc=item["주요 정보 1"]||"";
+            const profileDesc=item["주요 정보 2"]||"";
+            const webDesc=item["설명"]||"";
+            const price=Number(item["가격"])||0;
+            
+            const info=printDesc.split("/").map(v=>v.trim());
+            
+            const country=info[0]||"";
+            const variety=info[1]||"";
+            const abv=info[2]||"";
+            const extra=info[3]||"";
+            
+            const profile=profileDesc
+                .split("/")
+                .map(v=>v.trim())
+                .filter(Boolean);
 
             const flag = getFlag(country);
             const typeIcon = getTypeIcon(category);
@@ -326,11 +361,8 @@ function showMenu(data) {
                     >
 
                     <div class="wine-info">
-
                         <div class="name">
-
                             ${item["이름"]}
-
                             ${
                                 recommended
                                 ? `<span class="badge">추천</span>`
@@ -340,16 +372,19 @@ function showMenu(data) {
                         </div>
 
                         <div class="wine-meta">
-
                             ${country ? `<span class="tag">${flag} ${country}</span>` : ""}
-
                             ${variety ? `<span class="tag">${typeIcon} ${variety}</span>` : ""}
-
                             ${abv ? `<span class="tag">☺️ ${abv}</span>` : ""}
-
                             ${extra ? `<span class="tag">${extraIcon} ${extra}</span>` : ""}
-
                         </div>
+
+                        ${
+                            profile.length
+                                ? `<div class="wine-profile">
+                                    ${renderWineProfile(profile)}
+                                </div>`
+                                : ""
+                        }
 
                         ${
                             webDesc
@@ -366,11 +401,8 @@ function showMenu(data) {
                             }
 
                         </div>
-
                     </div>
-
                 </div>
-
             `;
 
             section.appendChild(card);
