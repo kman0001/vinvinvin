@@ -337,9 +337,14 @@ function showMenu(data) {
 
             const flag = getFlag(country);
             const typeIcon = getTypeIcon(category);
-
+            
+            const available =
+                String(item["판매 여부"]).toUpperCase() !== "FALSE";
+            
+            const recommended =
+                String(item["추천"]).toUpperCase() === "TRUE";
+            
             let extraIcon = "📌";
-
             if (/^\d{4}$/.test(extra) || extra.toUpperCase() === "NV") {
                 extraIcon = "📅";
             } else if (/ml/i.test(extra)) {
