@@ -347,10 +347,10 @@ function showMenu(data) {
             const typeIcon = getTypeIcon(category);
             
             const available =
-                String(item["판매 여부"]).toUpperCase() !== "FALSE";
+                String(item["판매 여부"]).toUpperCase() !== "품절";
             
             const recommended =
-                String(item["추천"]).toUpperCase() === "TRUE";
+                String(item["추천"]).toUpperCase() === "추천";
             
             let extraIcon = "📌";
             if (/^\d{4}$/.test(extra) || extra.toUpperCase() === "NV") {
