@@ -270,12 +270,12 @@ main{
 
 .profile-bars{
     display:flex;
-    gap:4px;
+    gap:2px;
 }
 
 .profile-bars .bar{
-    width:10px;
-    height:10px;
+    width:9px;
+    height:9px;
     border-radius:2px;
     background:#d9d9d9;
 }
