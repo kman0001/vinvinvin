@@ -268,11 +268,12 @@ main{
 }
 
 .profile-bar{
-    display:flex;
-    gap:2px;
+    display:inline-flex;
+    gap:1px;
 }
 
-.profile-bar span{
+.profile-bar .fill,
+.profile-bar .empty{
     font-size:14px;
     line-height:1;
 }
