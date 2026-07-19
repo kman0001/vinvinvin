@@ -282,7 +282,7 @@ function showMenu(data) {
                 ? imageFile
                 : `images/${imageFile || "no-image.jpg"}`;
 
-            const printDesc = item["주요 정보"] || "";
+            const printDesc = item["주요 정보 1"] || "";
             const webDesc = item["설명"] || "";
             const price = Number(item["가격"]) || 0;
 
