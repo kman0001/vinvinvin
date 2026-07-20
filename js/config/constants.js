@@ -1,0 +1,27 @@
+// ===========================
+// API
+// ===========================
+
+export const API =
+    "https://script.google.com/macros/s/AKfycbxRjcOBvaZJwDWYkMLie7rZfEA91YTruX9b2r2gC6xNm6ogN9xbo9rZ-L-hcTS-drFMYA/exec";
+
+// ===========================
+// Category Order
+// ===========================
+
+export const CATEGORY_ORDER = [
+    "글라스 와인",
+    "레드",
+    "화이트",
+    "스파클링",
+    "맥주",
+    "위스키",
+    "꼬냑",
+    "안주"
+];
+
+// ===========================
+// Default Images
+// ===========================
+
+export const NO_IMAGE = "images/no-image.jpg";
