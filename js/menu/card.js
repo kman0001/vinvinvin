@@ -137,11 +137,7 @@ export function createMenuCard(item, category) {
 
                 ${
                     item["설명"]
-                        ? `
-                        <div class="web-desc">
-                            ${item["설명"]}
-                        </div>
-                        `
+                        ? `<div class="web-desc">${item["설명"]}</div>`
                         : ""
                 }
 
