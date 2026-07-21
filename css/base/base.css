@@ -17,4 +17,6 @@ body{
     background:#f5f5f5;
     color:#222;
     line-height:1.6;
+    word-break:keep-all;
+    overflow-wrap:break-word;
 }
