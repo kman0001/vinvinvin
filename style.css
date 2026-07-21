@@ -317,9 +317,11 @@ main{
   
   color: #7d0000;
   
+  /* ===========================
   font-style: italic;
   display: inline-block
   transform: skewX(-10deg);
+  =========================== */ 
 }
 
 /* ===========================
