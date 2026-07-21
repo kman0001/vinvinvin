@@ -44,33 +44,46 @@ export function initNavigationObserver() {
         return;
     }
 
-    const observer = new IntersectionObserver(entries => {
+    function updateActiveNavigation() {
 
-        entries.forEach(entry => {
+        const nav = document.getElementById("category-nav");
+        const navHeight = nav ? nav.offsetHeight : 0;
 
-            if (!entry.isIntersecting) {
-                return;
+        let currentSection = sections[0];
+
+        sections.forEach(section => {
+
+            const sectionTop =
+                section.getBoundingClientRect().top;
+
+            if (sectionTop <= navHeight + 20) {
+                currentSection = section;
             }
-
-            const id = entry.target.id;
-
-            buttons.forEach(button => {
-
-                button.classList.toggle(
-                    "active",
-                    id === `category-${button.textContent}`
-                );
-
-            });
 
         });
 
-    }, {
-        threshold: 0.3
-    });
+        const activeId = currentSection.id;
 
-    sections.forEach(section => {
-        observer.observe(section);
-    });
+        buttons.forEach(button => {
+
+            const targetId =
+                `category-${button.textContent.trim()}`;
+
+            button.classList.toggle(
+                "active",
+                targetId === activeId
+            );
+
+        });
+
+    }
+
+    window.addEventListener(
+        "scroll",
+        updateActiveNavigation,
+        { passive: true }
+    );
+
+    updateActiveNavigation();
 
 }
