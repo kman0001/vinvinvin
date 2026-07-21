@@ -137,7 +137,10 @@ export function createMenuCard(item, category) {
 
                 ${
                     item["설명"]
-                        ? `<div class="web-desc">${item["설명"]}</div>`
+                        ? `<div class="web-desc">${
+                            // 정규표현식으로 큰따옴표("") 안의 내용을 span 태그로 감쌉니다.
+                            item["설명"].replace(/"([^"]*)"/g, '<span class="bold-quotes">"$1"</span>')
+                          }</div>`
                         : ""
                 }
 
