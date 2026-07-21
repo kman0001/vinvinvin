@@ -6,14 +6,14 @@ const PROFILE_ICONS = {
     "당도": "🍬",
     "산도": "🍋",
     "바디": "💪",
-    "타닌": "🌿"
+    "탄닌": "🌿"
 };
 
 const PROFILE_ORDER = [
     "당도",
     "산도",
     "바디",
-    "타닌"
+    "탄닌"
 ];
 
 export function renderWineProfile(profile) {
@@ -22,7 +22,7 @@ export function renderWineProfile(profile) {
 
     profile.forEach(item => {
 
-        const match = item.match(/(당도|산도|바디|타닌)\s*(\d)/);
+        const match = item.match(/(당도|산도|바디|탄닌)\s*(\d)/);
 
         if (match) {
             values[match[1]] = Number(match[2]);
