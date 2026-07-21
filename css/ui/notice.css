@@ -3,6 +3,7 @@
 =========================== */
 
 #notice{
+    /* word-break: break-all; */
     max-width:1200px;
     margin:24px auto 12px;
     padding:0 24px;
