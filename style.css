@@ -309,6 +309,17 @@ main{
     margin-bottom:20px;
 }
 
+.web-desc .bold-quotes {
+  font-family: 'Noto Serif KR', serif;
+  font-weight: 700;
+  font-size: 1.2em;
+  letter-spacing: -0.02em;
+  
+  font-style: italic;
+  display: inline-block
+  transform: skewX(-10deg);
+}
+
 /* ===========================
    Price
 =========================== */
