@@ -311,9 +311,11 @@ main{
 
 .web-desc .bold-quotes {
   font-family: 'Noto Serif KR', serif;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 1.2em;
   letter-spacing: -0.02em;
+  
+  color: #7d0000;
   
   font-style: italic;
   display: inline-block
