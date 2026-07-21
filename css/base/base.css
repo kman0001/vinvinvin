@@ -1,4 +1,16 @@
 /* ===========================
+   Fonts
+=========================== */
+
+@font-face {
+    font-family: "MaruBuri";
+    src: url("../../fonts/MaruBuri-Bold.woff2") format("woff2");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* ===========================
    Reset & Base
 =========================== */
 
@@ -13,7 +25,7 @@ html{
 }
 
 body{
-    font-family:"Pretendard","Noto Sans KR",sans-serif;
+    font-family:"Pretendard Variable",sans-serif;
     background:#f5f5f5;
     color:#222;
     line-height:1.6;
