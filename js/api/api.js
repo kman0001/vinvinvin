@@ -6,7 +6,9 @@ import { API } from "../config/constants.js";
 
 export async function fetchData() {
 
-    const response = await fetch(API);
+    const response = await fetch(API, {
+        cache: "no-store"
+    });
 
     if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
