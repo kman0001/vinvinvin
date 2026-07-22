@@ -103,7 +103,7 @@ export function createMenuCard(item, category) {
                 src="${imageSrc}"
                 data-image="${imageSrc}"
                 alt="${item["이름"]}"
-                onerror="this.src='images/no-image.jpg'"
+                onerror="this.src='images/no-image.webp'"
             >
 
             <div class="wine-info">
