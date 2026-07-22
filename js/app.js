@@ -1,31 +1,27 @@
 import { fetchData } from "./api/api.js";
-
 import { showMenu } from "./menu/menu.js";
-
 import { showNotice } from "./ui/notice.js";
-
 import { initLightbox } from "./ui/lightbox.js";
+import { hideLoading } from "./ui/loading.js";
 
 // ===========================
 // Initialize
 // ===========================
 
 async function init() {
-
     try {
 
         const { menu, notice } = await fetchData();
-
         render(menu, notice);
+        document.getElementById("loading")?.remove();
 
     } catch (error) {
-
         console.error("초기화 실패:", error);
-
         showError();
 
+    } finally {
+        hideLoading();
     }
-
 }
 
 // ===========================
@@ -35,9 +31,7 @@ async function init() {
 function render(menu, notice) {
 
     showNotice(notice);
-
     showMenu(menu);
-
     initLightbox();
 
 }
