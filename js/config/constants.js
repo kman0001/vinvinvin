@@ -24,4 +24,4 @@ export const CATEGORY_ORDER = [
 // Default Images
 // ===========================
 
-export const NO_IMAGE = "images/no-image.jpg";
+export const NO_IMAGE = "images/no-image.webp";
