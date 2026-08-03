@@ -4,14 +4,9 @@ services:
     container_name: vinvinvin-image-processor
     restart: unless-stopped
 
-    env_file:
-      - .env
-
     environment:
       - TZ=Asia/Seoul
-      - U2NET_HOME=/app/data/models
 
-    user: "${UID}:${GID}"
     volumes:
       - ./config:/app/config
-      - ./data:/app/data
+      - ./your/local/images:/app/images

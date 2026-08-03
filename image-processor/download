@@ -1,0 +1,12 @@
+# Secrets and runtime configuration
+.env
+config/config.json
+config/cache.json
+config/*.backup
+
+# Local image storage
+images/
+
+# Python
+__pycache__/
+*.py[cod]

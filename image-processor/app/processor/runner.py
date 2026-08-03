@@ -58,8 +58,11 @@ def process_images(config):
         return
 
     timeout = config.get("source", {}).get("timeout_seconds", 30)
+    current_keys = set()
+
     for item in menu:
         key = canonical_name(item.category, item.name)
+        current_keys.add(key)
         if not item.is_url:
             if item.is_local_webp:
                 set_item(
@@ -129,5 +132,30 @@ def process_images(config):
                 error=str(exc)
             )
 
+    # Remove images that were previously managed by this processor but no longer
+    # exist in the current menu. Deletion is scoped to destinations recorded in
+    # cache.json, so unrelated repository/bucket files are never touched.
+    stale_keys = cache.keys() - current_keys
+    for key in stale_keys:
+        item = cache.get(key) or {}
+        storage_status = item.get("storage", {})
+        for storage_name, storage in storages:
+            previous = storage_status.get(storage_name, {})
+            destination = previous.get("destination") or item.get("destination")
+            if not destination:
+                continue
+            try:
+                if storage.exists(destination):
+                    storage.delete(destination)
+                    print(f"[INFO] Deleted stale image: {storage_name}/{destination}", flush=True)
+            except Exception as exc:
+                print(
+                    f"[ERROR] Failed to delete stale image {storage_name}/{destination}: {exc}",
+                    flush=True,
+                )
+                continue
+        cache.remove(key)
+
+    cache.save()
     print("Image processing finished", flush=True)
 

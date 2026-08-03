@@ -4,6 +4,11 @@ from datetime import datetime
 from app.config import load_config
 from app.scheduler import get_next_run
 
+config = load_config()
+
+if config is None:
+    raise SystemExit(1)
+
 from app.processor.processor import process_images
 
 

@@ -13,7 +13,7 @@ class CacheManager:
     def __init__(self):
 
         self.path = Path(
-            "/app/data/cache.json"
+            "/app/config/cache.json"
         )
 
         self.data = DEFAULT_CACHE.copy()

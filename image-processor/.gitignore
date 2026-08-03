@@ -1,8 +1,4 @@
-.env
-config/config.json
-config/*.backup
-data/images/
-data/cache.json
-data/*.log
+config/
+
 __pycache__/
 *.py[cod]

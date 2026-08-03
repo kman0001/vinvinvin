@@ -21,13 +21,14 @@ DEFAULT_CONFIG = {
             "repository": "",
             "branch": "main",
             "path": "website/images",
+            "token_env": "GITHUB_TOKEN",
             "token": ""
         },
 
         "local": {
             "enabled": False,
             "type": "local",
-            "path": ""
+            "path": "/app/images"
         },
 
         "r2": {
@@ -35,6 +36,9 @@ DEFAULT_CONFIG = {
             "type": "s3",
             "endpoint": "",
             "bucket": "",
+            "path": "",
+            "access_key_env": "R2_ACCESS_KEY",
+            "secret_key_env": "R2_SECRET_KEY",
             "access_key": "",
             "secret_key": ""
         },
@@ -44,6 +48,9 @@ DEFAULT_CONFIG = {
             "type": "s3",
             "region": "",
             "bucket": "",
+            "path": "",
+            "access_key_env": "AWS_ACCESS_KEY_ID",
+            "secret_key_env": "AWS_SECRET_ACCESS_KEY",
             "access_key": "",
             "secret_key": ""
         }

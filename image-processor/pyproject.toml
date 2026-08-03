@@ -7,7 +7,8 @@ requires-python = ">=3.11"
 dependencies = [
     "pillow>=10.0.0",
     "croniter>=2.0.0",
-    "rembg[cpu]>=2.0.67"
+    "rembg[cpu]>=2.0.67",
+    "boto3>=1.35.0"
 ]
 
 
