@@ -84,25 +84,35 @@ function getSheetData(spreadsheet, sheetName) {
       );
 
 
-  return values.map(row => {
+const itemIndex = headers.indexOf("항목");
+
+return values
+  .filter(row => {
+
+    // '항목' 열이 있는 시트만 적용
+    if (itemIndex === -1) {
+      return true;
+    }
+
+    // '항목'이 비어 있는 행은 제외
+    return String(row[itemIndex]).trim() !== "";
+
+  })
+  .map(row => {
 
     const obj = {};
-
 
     headers.forEach((header, index) => {
 
       let value = row[index];
 
-
       if (header === "사진") {
         value = convertDriveImageUrl(value);
       }
 
-
       obj[header] = value;
 
     });
-
 
     return obj;
 
