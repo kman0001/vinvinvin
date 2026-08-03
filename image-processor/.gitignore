@@ -1,0 +1,8 @@
+.env
+config/config.json
+config/*.backup
+data/images/
+data/cache.json
+data/*.log
+__pycache__/
+*.py[cod]
