@@ -2,5 +2,3 @@ config/
 
 __pycache__/
 *.py[cod]
-
-docker-compose.yml
