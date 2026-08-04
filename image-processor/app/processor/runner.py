@@ -1,25 +1,28 @@
 import shutil
 import tempfile
-from datetime import datetime, timezone
 from pathlib import Path
 from urllib.request import Request, urlopen
 
-from app.cache.cache import CacheManager
 from app.processor.hash import calculate_hash, calculate_menu_hash
 from app.processor.image import process_image
+from app.processor.sync_engine import SyncEngine
 from app.source import SourceError, load_menu
 from app.storage import create_storage
 
 
 CATEGORY_MAP = {
+    "글라스 와인": "Glass",
     "레드": "Red",
     "화이트": "White",
-    "로제": "Rose",
     "스파클링": "Sparkling",
-    "샴페인": "Champagne",
+    "맥주": "Beer",
+    "위스키": "Whiskey",
+    "꼬냑": "Cognac",
     "안주": "Snack",
-    "글라스 와인": "Glass",
 }
+
+
+LOCAL_IMAGE_DIR = Path("/app/images")
 
 
 def get_category_prefix(category):
@@ -69,35 +72,6 @@ def get_enabled_storages(config):
     return storages
 
 
-def now():
-    return datetime.now(
-        timezone.utc
-    ).isoformat()
-
-
-def set_item(
-    cache,
-    key,
-    **values
-):
-    item = cache.get(
-        key
-    ) or {}
-
-    item.update(
-        values
-    )
-
-    item["updated_at"] = now()
-
-    cache.set(
-        key,
-        item
-    )
-
-    cache.save()
-
-
 def download(
     url,
     destination,
@@ -126,13 +100,71 @@ def download(
             )
 
 
+def find_local_image(filename):
+    """
+    Find an original image in the shared /app/images directory.
+
+    The Google Sheet may contain:
+        foo.png
+        foo.jpg
+        foo.jpeg
+        foo.webp
+
+    Only the exact filename is preferred.
+    """
+
+    if not filename:
+        return None
+
+    filename = Path(filename).name
+
+    source = LOCAL_IMAGE_DIR / filename
+
+    if source.is_file():
+        return source
+
+    return None
+
+
+def is_ignored_image(filename):
+    """
+    Images beginning with no-image are placeholders and must not
+    be processed or uploaded.
+    """
+
+    if not filename:
+        return False
+
+    return Path(filename).name.lower().startswith(
+        "no-image"
+    )
+
+
+def process_local_source(
+    source,
+    temp_dir
+):
+    """
+    Copy a local source image into the temporary working directory.
+
+    This prevents the original image in /app/images from being modified.
+    """
+
+    local_source = temp_dir / "source"
+
+    shutil.copy2(
+        source,
+        local_source
+    )
+
+    return local_source
+
+
 def process_images(config):
     print(
         "Image processing started",
         flush=True
     )
-
-    cache = CacheManager()
 
     storages = get_enabled_storages(
         config
@@ -165,9 +197,31 @@ def process_images(config):
         30
     )
 
+    sync_engine = SyncEngine(
+        storages
+    )
+
     current_keys = set()
 
-    for item in menu:
+    for index, item in enumerate(menu):
+
+        if not item.category or not item.name or not item.photo:
+
+            print(
+                f"[WARN] menu[{index}] lacks 종류, 이름, or 사진; skipped.",
+                flush=True
+            )
+
+            continue
+
+        if is_ignored_image(item.photo):
+
+            print(
+                f"[INFO] Ignored placeholder image: {item.photo}",
+                flush=True
+            )
+
+            continue
 
         menu_hash = calculate_menu_hash(
             item.category,
@@ -178,32 +232,102 @@ def process_images(config):
             menu_hash
         )
 
-        if not item.is_url:
+        cached_item = sync_engine.get_cached_item(
+            menu_hash
+        )
 
-            if item.is_local_webp:
-                set_item(
-                    cache,
-                    menu_hash,
-                    category=item.category,
-                    name=item.name,
-                    source=item.photo,
-                    source_type="local",
-                    status="skipped",
-                    reason="local_webp"
-                )
-                continue
+        expected_prefix = (
+            f"{get_category_prefix(item.category)}_"
+        )
 
-            set_item(
-                cache,
-                menu_hash,
+        cached_destination = (
+            cached_item.get("destination", "")
+            if cached_item
+            else ""
+        )
+
+        same_destination = (
+            cached_destination.startswith(
+                expected_prefix
+            )
+        )
+
+        # ----------------------------------------------------------
+        # 1. 동일 메뉴 + 동일 source
+        #
+        # 이미 성공적으로 처리된 경우 모든 작업을 생략한다.
+        # ----------------------------------------------------------
+
+        if (
+            cached_item
+            and cached_item.get("status") == "success"
+            and cached_item.get("source") == item.photo
+            and cached_item.get("image_hash")
+            and cached_destination
+            and same_destination
+        ):
+            sync_engine.skip_item(
+                key=menu_hash,
                 category=item.category,
                 name=item.name,
                 source=item.photo,
-                source_type="local",
-                status="error",
-                error="Local non-WebP image cannot be fetched."
+                cached_item=cached_item
             )
+
+            print(
+                f"[INFO] Skipped unchanged image: {item.name}",
+                flush=True
+            )
+
             continue
+
+        # ----------------------------------------------------------
+        # 2. 같은 category + 같은 source
+        #
+        # 메뉴명이 변경되어 menu_hash가 달라졌더라도
+        # 기존 이미지를 재사용한다.
+        # ----------------------------------------------------------
+
+        source_key, source_item = (
+            sync_engine.find_by_source(
+                item.photo,
+                item.category
+            )
+        )
+
+        if (
+            source_item
+            and source_key != menu_hash
+            and source_item.get("image_hash")
+            and source_item.get("destination")
+        ):
+
+            sync_engine.reuse_item(
+                key=menu_hash,
+                category=item.category,
+                name=item.name,
+                source=item.photo,
+                image_hash=source_item["image_hash"],
+                filename=source_item["destination"],
+                source_key=source_key
+            )
+
+            print(
+                f"[INFO] Reused cached image: {item.name}",
+                flush=True
+            )
+
+            continue
+
+        # ----------------------------------------------------------
+        # 3. 실제 source 준비
+        #
+        # URL:
+        #     다운로드
+        #
+        # 로컬 파일:
+        #     /app/images에서 원본 탐색 후 임시 폴더로 복사
+        # ----------------------------------------------------------
 
         try:
 
@@ -220,11 +344,49 @@ def process_images(config):
                     "source"
                 )
 
-                download(
-                    item.photo,
-                    source,
-                    timeout
-                )
+                if item.is_url:
+
+                    print(
+                        f"[INFO] Downloading: {item.name}",
+                        flush=True
+                    )
+
+                    download(
+                        item.photo,
+                        source,
+                        timeout
+                    )
+
+                else:
+
+                    local_source = find_local_image(
+                        item.photo
+                    )
+
+                    if local_source is None:
+
+                        print(
+                            "[ERROR] Local image not found: "
+                            f"{item.photo}",
+                            flush=True
+                        )
+
+                        continue
+
+                    print(
+                        f"[INFO] Using local image: "
+                        f"{item.name} <- {local_source.name}",
+                        flush=True
+                    )
+
+                    process_local_source(
+                        local_source,
+                        temp_dir
+                    )
+
+                # --------------------------------------------------
+                # 4. 원본 hash
+                # --------------------------------------------------
 
                 image_hash = calculate_hash(
                     source
@@ -235,6 +397,10 @@ def process_images(config):
                     f"{image_hash[:16]}.webp"
                 )
 
+                # --------------------------------------------------
+                # 5. 이미지 처리
+                # --------------------------------------------------
+
                 output = process_image(
                     source,
                     item.category,
@@ -242,218 +408,52 @@ def process_images(config):
                     filename
                 )
 
-                storage_status = {}
+                # --------------------------------------------------
+                # 6. storage 동기화
+                # --------------------------------------------------
 
-                previous_item = (
-                    cache.get(
-                        menu_hash
-                    ) or {}
-                )
-
-                previous_storages = (
-                    previous_item.get(
-                        "storage",
-                        {}
-                    )
-                )
-
-                for (
-                    storage_name,
-                    storage
-                ) in storages:
-
-                    previous = (
-                        previous_storages.get(
-                            storage_name,
-                            {}
-                        )
-                    )
-
-                    if (
-                        previous.get(
-                            "status"
-                        ) == "success"
-                        and previous.get(
-                            "image_hash"
-                        ) == image_hash
-                        and previous.get(
-                            "destination"
-                        ) == filename
-                        and storage.exists(
-                            filename
-                        )
-                    ):
-                        storage_status[
-                            storage_name
-                        ] = previous
-
-                        continue
-
-                    try:
-
-                        old_destination = previous.get(
-                            "destination"
-                        )
-
-                        if (
-                            old_destination
-                            and old_destination != filename
-                            and storage.exists(
-                                old_destination
-                            )
-                        ):
-                            storage.delete(
-                                old_destination
-                            )
-
-                            print(
-                                "[INFO] Replaced old image: "
-                                f"{storage_name}/{old_destination}",
-                                flush=True
-                            )
-
-                        storage.upload(
-                            output,
-                            filename
-                        )
-
-                        storage_status[
-                            storage_name
-                        ] = {
-                            "status": "success",
-                            "destination": filename,
-                            "image_hash": image_hash,
-                            "updated_at": now()
-                        }
-
-                    except Exception as exc:
-
-                        storage_status[
-                            storage_name
-                        ] = {
-                            "status": "error",
-                            "destination": filename,
-                            "image_hash": image_hash,
-                            "error": str(exc),
-                            "updated_at": now()
-                        }
-
-                failed = [
-                    name
-                    for (
-                        name,
-                        status
-                    ) in storage_status.items()
-                    if status.get(
-                        "status"
-                    ) == "error"
-                ]
-
-                set_item(
-                    cache,
-                    menu_hash,
+                result = sync_engine.sync_item(
+                    key=menu_hash,
                     category=item.category,
                     name=item.name,
                     source=item.photo,
-                    source_type="url",
                     image_hash=image_hash,
-                    destination=filename,
-                    status=(
-                        "error"
-                        if failed
-                        else "success"
-                    ),
-                    error=(
-                        f"Upload failed: {', '.join(failed)}"
-                        if failed
-                        else None
-                    ),
-                    storage=storage_status
+                    filename=filename,
+                    output=output
                 )
 
-        except Exception as exc:
-
-            set_item(
-                cache,
-                menu_hash,
-                category=item.category,
-                name=item.name,
-                source=item.photo,
-                source_type="url",
-                status="error",
-                error=str(exc)
-            )
-
-    # 현재 메뉴에서 사라진 항목 처리
-    stale_keys = (
-        cache.keys()
-        - current_keys
-    )
-
-    for key in stale_keys:
-
-        item = cache.get(
-            key
-        ) or {}
-
-        storage_status = item.get(
-            "storage",
-            {}
-        )
-
-        for (
-            storage_name,
-            storage
-        ) in storages:
-
-            previous = (
-                storage_status.get(
-                    storage_name,
-                    {}
-                )
-            )
-
-            destination = (
-                previous.get(
-                    "destination"
-                )
-                or item.get(
-                    "destination"
-                )
-            )
-
-            if not destination:
-                continue
-
-            try:
-
-                if storage.exists(
-                    destination
-                ):
-
-                    storage.delete(
-                        destination
-                    )
+                if result.get("status") == "success":
 
                     print(
-                        "[INFO] Deleted stale image: "
-                        f"{storage_name}/{destination}",
+                        f"[INFO] Processed: "
+                        f"{item.name} -> {filename}",
                         flush=True
                     )
 
-            except Exception as exc:
+                else:
 
-                print(
-                    "[ERROR] Failed to delete stale image "
-                    f"{storage_name}/{destination}: {exc}",
-                    flush=True
-                )
+                    print(
+                        f"[ERROR] Processing failed: "
+                        f"{item.name} -> "
+                        f"{result.get('error')}",
+                        flush=True
+                    )
 
-        cache.remove(
-            key
-        )
+        except Exception as exc:
 
-    cache.save()
+            print(
+                f"[ERROR] Failed to process "
+                f"{item.name}: {exc}",
+                flush=True
+            )
+
+    # --------------------------------------------------------------
+    # 7. 현재 메뉴에 없는 cache 및 storage 파일 정리
+    # --------------------------------------------------------------
+
+    sync_engine.remove_stale_items(
+        current_keys
+    )
 
     print(
         "Image processing finished",
