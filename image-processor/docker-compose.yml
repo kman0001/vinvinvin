@@ -1,0 +1,16 @@
+services:
+  image-processor:
+    build: .
+    container_name: vinvinvin-image-processor
+    restart: unless-stopped
+    
+    environment:
+      - TZ=Asia/Seoul
+
+    volumes:
+      - rembg-models:/tmp/u2net
+      - ./config:/app/config
+      - ./your/local/images:/app/images
+
+volumes:
+  rembg-models:
