@@ -1,5 +1,4 @@
 import json
-import os
 from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
@@ -15,10 +14,7 @@ class GitHubStorage(Storage):
         self.repository = config.get("repository", "").strip()
         self.branch = config.get("branch", "main").strip() or "main"
         self.base_path = config.get("path", "").strip().strip("/")
-        self.token = (
-            os.environ.get(config.get("token_env", "GITHUB_TOKEN"), "").strip()
-            or config.get("token", "").strip()
-        )
+        self.token = config.get("token", "").strip()
         if not self.repository:
             raise ValueError("github.repository is required")
         if not self.token:

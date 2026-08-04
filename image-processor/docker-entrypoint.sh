@@ -21,10 +21,19 @@ fi
 USER_NAME="$(getent passwd "$APP_UID" | cut -d: -f1 || true)"
 if [ -z "$USER_NAME" ]; then
     USER_NAME="imageprocessor"
-    useradd --uid "$APP_UID" --gid "$APP_GID" --create-home --no-user-group "$USER_NAME"
+    useradd \
+        --uid "$APP_UID" \
+        --gid "$APP_GID" \
+        --create-home \
+        --no-user-group \
+        "$USER_NAME"
 fi
 
-mkdir -p /tmp/u2net /tmp/numba_cache /app/images
-chown "$APP_UID:$APP_GID" /tmp/u2net /tmp/numba_cache /app/config /app/images
+mkdir -p /tmp/u2net /tmp/numba_cache
+chown "$APP_UID:$APP_GID" /tmp/u2net /tmp/numba_cache
 
-exec su -s /bin/sh "$USER_NAME" -c 'exec "$@"' -- "$@"
+exec setpriv \
+    --reuid="$APP_UID" \
+    --regid="$APP_GID" \
+    --init-groups \
+    "$@"

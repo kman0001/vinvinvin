@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from app.storage.base import Storage
 
@@ -15,8 +14,8 @@ class S3Storage(Storage):
 
         self.bucket = config.get("bucket", "").strip()
         self.prefix = config.get("path", "").strip().strip("/")
-        access_key = os.environ.get(config.get("access_key_env", ""), "").strip() or config.get("access_key", "").strip()
-        secret_key = os.environ.get(config.get("secret_key_env", ""), "").strip() or config.get("secret_key", "").strip()
+        access_key = config.get("access_key", "").strip()
+        secret_key = config.get("secret_key", "").strip()
         if not self.bucket:
             raise ValueError(f"{name}.bucket is required")
         if not access_key or not secret_key:

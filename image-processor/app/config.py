@@ -6,8 +6,36 @@ CONFIG_DIR = Path("/app/config")
 CONFIG_FILE = CONFIG_DIR / "config.json"
 
 
+SUPPORTED_STORAGE_TYPES = {
+    "github",
+    "local",
+    "r2",
+    "s3",
+}
+
+
+OUTPUT_MODES = {
+    "github": {"filename", "url"},
+    "local": {"filename"},
+    "r2": {"url"},
+    "s3": {"url"},
+}
+
+
+EXPECTED_TYPES = {
+    "github": "github",
+    "local": "local",
+    "r2": "s3",
+    "s3": "s3",
+}
+
+
 DEFAULT_CONFIG = {
-    "source": {"base_url": "", "constants_path": "/js/config/constants.js", "timeout_seconds": 30},
+    "source": {
+        "base_url": "https://your-website.com",
+        "constants_path": "/js/config/constants.js",
+        "timeout_seconds": 30
+    },
 
     "scheduler": {
         "enabled": False,
@@ -18,43 +46,47 @@ DEFAULT_CONFIG = {
         "github": {
             "enabled": False,
             "type": "github",
-            "repository": "",
+            "repository": "your-username/your-repo",
             "branch": "main",
             "path": "website/images",
-            "token_env": "GITHUB_TOKEN",
-            "token": ""
+            "output_mode": "filename",
+            "base_url": "https://your-website.com/images",
+            "token": "your-github-token"
         },
 
         "local": {
             "enabled": False,
             "type": "local",
-            "path": "/app/images"
+            "path": "/app/images",
+            "output_mode": "filename"
         },
 
         "r2": {
             "enabled": False,
             "type": "s3",
-            "endpoint": "",
-            "bucket": "",
-            "path": "",
-            "access_key_env": "R2_ACCESS_KEY",
-            "secret_key_env": "R2_SECRET_KEY",
-            "access_key": "",
-            "secret_key": ""
+            "endpoint": "your-r2-endpoint",
+            "bucket": "your-r2-bucket",
+            "path": "your-r2-path",
+            "output_mode": "url",
+            "base_url": "https://pub-xxxxxxxxxxxxxxxx.r2.dev",
+            "access_key": "your-r2-access-key",
+            "secret_key": "your-r2-secret-key"
         },
 
         "s3": {
             "enabled": False,
             "type": "s3",
-            "region": "",
-            "bucket": "",
-            "path": "",
-            "access_key_env": "AWS_ACCESS_KEY_ID",
-            "secret_key_env": "AWS_SECRET_ACCESS_KEY",
-            "access_key": "",
-            "secret_key": ""
+            "region": "your-s3-region",
+            "bucket": "your-s3-bucket",
+            "path": "your-s3-path",
+            "output_mode": "url",
+            "base_url": "https://your-s3-bucket.s3.amazonaws.com",
+            "access_key": "your-s3-access-key",
+            "secret_key": "your-s3-secret-key"
         }
-    }
+    },
+
+    "primary_storage": "local"
 }
 
 
@@ -74,6 +106,344 @@ def create_default_config():
             indent=2,
             ensure_ascii=False
         )
+
+
+def validate_config(config):
+    """
+    Validate the loaded configuration.
+
+    Returns:
+        bool: True if the configuration is valid.
+    """
+
+    if not isinstance(config, dict):
+        print(
+            "[ERROR] config.json must contain a JSON object.",
+            flush=True
+        )
+
+        return False
+
+    # ------------------------------------------------------------------
+    # Source
+    # ------------------------------------------------------------------
+
+    source = config.get("source")
+
+    if not isinstance(source, dict):
+        print(
+            "[ERROR] 'source' configuration is missing or invalid.",
+            flush=True
+        )
+
+        return False
+
+    timeout = source.get("timeout_seconds")
+
+    if not isinstance(timeout, (int, float)) or timeout <= 0:
+        print(
+            "[ERROR] 'source.timeout_seconds' must be greater than 0.",
+            flush=True
+        )
+
+        return False
+
+    # ------------------------------------------------------------------
+    # Scheduler
+    # ------------------------------------------------------------------
+
+    scheduler = config.get("scheduler")
+
+    if not isinstance(scheduler, dict):
+        print(
+            "[ERROR] 'scheduler' configuration is missing or invalid.",
+            flush=True
+        )
+
+        return False
+
+    if not isinstance(scheduler.get("enabled"), bool):
+        print(
+            "[ERROR] 'scheduler.enabled' must be true or false.",
+            flush=True
+        )
+
+        return False
+
+    cron = scheduler.get("cron")
+
+    if not isinstance(cron, str) or not cron.strip():
+        print(
+            "[ERROR] 'scheduler.cron' is required.",
+            flush=True
+        )
+
+        return False
+
+    # ------------------------------------------------------------------
+    # Storage
+    # ------------------------------------------------------------------
+
+    storage = config.get("storage")
+
+    if not isinstance(storage, dict):
+        print(
+            "[ERROR] 'storage' configuration is missing or invalid.",
+            flush=True
+        )
+
+        return False
+
+    for storage_name in SUPPORTED_STORAGE_TYPES:
+        storage_config = storage.get(storage_name)
+
+        if storage_config is None:
+            continue
+
+        if not isinstance(storage_config, dict):
+            print(
+                f"[ERROR] Storage '{storage_name}' configuration is invalid.",
+                flush=True
+            )
+
+            return False
+
+        enabled = storage_config.get("enabled")
+
+        if not isinstance(enabled, bool):
+            print(
+                f"[ERROR] Storage '{storage_name}' "
+                "'enabled' must be true or false.",
+                flush=True
+            )
+
+            return False
+
+        expected_type = EXPECTED_TYPES[storage_name]
+        storage_type = storage_config.get("type")
+
+        if storage_type != expected_type:
+            print(
+                f"[ERROR] Storage '{storage_name}' has invalid type: "
+                f"{storage_type!r}. Expected {expected_type!r}.",
+                flush=True
+            )
+
+            return False
+
+        output_mode = storage_config.get("output_mode")
+
+        if output_mode not in OUTPUT_MODES[storage_name]:
+            allowed = ", ".join(
+                sorted(OUTPUT_MODES[storage_name])
+            )
+
+            print(
+                f"[ERROR] Storage '{storage_name}' has invalid "
+                f"output_mode: {output_mode!r}. "
+                f"Allowed values: {allowed}.",
+                flush=True
+            )
+
+            return False
+
+        # URL output requires a public web base URL.
+        if output_mode == "url":
+            base_url = storage_config.get("base_url", "").strip()
+
+            if not base_url:
+                print(
+                    f"[ERROR] Storage '{storage_name}' requires "
+                    "'base_url' when output_mode is 'url'.",
+                    flush=True
+                )
+
+                return False
+
+        if not enabled:
+            continue
+
+        # --------------------------------------------------------------
+        # Enabled storage-specific requirements
+        # --------------------------------------------------------------
+
+        if storage_name == "github":
+            repository = storage_config.get(
+                "repository",
+                ""
+            ).strip()
+
+            token = storage_config.get(
+                "token",
+                ""
+            ).strip()
+
+            if not repository:
+                print(
+                    "[ERROR] github.repository is required.",
+                    flush=True
+                )
+
+                return False
+
+            if "/" not in repository:
+                print(
+                    "[ERROR] github.repository must be in "
+                    "owner/repository form.",
+                    flush=True
+                )
+
+                return False
+
+            if not token:
+                print(
+                    "[ERROR] github.token is required.",
+                    flush=True
+                )
+
+                return False
+
+        elif storage_name == "local":
+            path = storage_config.get(
+                "path",
+                ""
+            ).strip()
+
+            if not path:
+                print(
+                    "[ERROR] local.path is required.",
+                    flush=True
+                )
+
+                return False
+
+        elif storage_name == "r2":
+            endpoint = storage_config.get(
+                "endpoint",
+                ""
+            ).strip()
+
+            bucket = storage_config.get(
+                "bucket",
+                ""
+            ).strip()
+
+            access_key = storage_config.get(
+                "access_key",
+                ""
+            ).strip()
+
+            secret_key = storage_config.get(
+                "secret_key",
+                ""
+            ).strip()
+
+            if not endpoint:
+                print(
+                    "[ERROR] r2.endpoint is required.",
+                    flush=True
+                )
+
+                return False
+
+            if not bucket:
+                print(
+                    "[ERROR] r2.bucket is required.",
+                    flush=True
+                )
+
+                return False
+
+            if not access_key or not secret_key:
+                print(
+                    "[ERROR] r2 access_key and secret_key are required.",
+                    flush=True
+                )
+
+                return False
+
+        elif storage_name == "s3":
+            region = storage_config.get(
+                "region",
+                ""
+            ).strip()
+
+            bucket = storage_config.get(
+                "bucket",
+                ""
+            ).strip()
+
+            access_key = storage_config.get(
+                "access_key",
+                ""
+            ).strip()
+
+            secret_key = storage_config.get(
+                "secret_key",
+                ""
+            ).strip()
+
+            if not region:
+                print(
+                    "[ERROR] s3.region is required.",
+                    flush=True
+                )
+
+                return False
+
+            if not bucket:
+                print(
+                    "[ERROR] s3.bucket is required.",
+                    flush=True
+                )
+
+                return False
+
+            if not access_key or not secret_key:
+                print(
+                    "[ERROR] s3 access_key and secret_key are required.",
+                    flush=True
+                )
+
+                return False
+
+    # ------------------------------------------------------------------
+    # Primary storage
+    # ------------------------------------------------------------------
+
+    primary_storage = config.get("primary_storage")
+
+    if primary_storage not in SUPPORTED_STORAGE_TYPES:
+        print(
+            f"[ERROR] Invalid primary_storage: "
+            f"{primary_storage!r}. "
+            f"Supported values: "
+            f"{', '.join(sorted(SUPPORTED_STORAGE_TYPES))}",
+            flush=True
+        )
+
+        return False
+
+    primary_config = storage.get(primary_storage)
+
+    if not isinstance(primary_config, dict):
+        print(
+            f"[ERROR] Primary storage '{primary_storage}' "
+            "configuration is missing.",
+            flush=True
+        )
+
+        return False
+
+    if not primary_config.get("enabled", False):
+        print(
+            f"[ERROR] Primary storage '{primary_storage}' is disabled.",
+            flush=True
+        )
+
+        return False
+
+    return True
 
 
 def load_config():
@@ -97,13 +467,12 @@ def load_config():
 
         return None
 
-
     try:
         with CONFIG_FILE.open(
             "r",
             encoding="utf-8"
         ) as f:
-            return json.load(f)
+            config = json.load(f)
 
     except json.JSONDecodeError as e:
         print(
@@ -112,3 +481,13 @@ def load_config():
         )
 
         return None
+
+    if not validate_config(config):
+        print(
+            "[ERROR] Configuration validation failed.",
+            flush=True
+        )
+
+        return None
+
+    return config

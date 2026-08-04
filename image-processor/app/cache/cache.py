@@ -2,6 +2,10 @@ import json
 from pathlib import Path
 
 
+CACHE_FILE = Path(
+    "/app/config/cache.json"
+)
+
 DEFAULT_CACHE = {
     "version": 1,
     "items": {}
@@ -11,58 +15,69 @@ DEFAULT_CACHE = {
 class CacheManager:
 
     def __init__(self):
-
-        self.path = Path(
-            "/app/config/cache.json"
-        )
-
-        self.data = DEFAULT_CACHE.copy()
+        self.data = {
+            "version": DEFAULT_CACHE["version"],
+            "items": {}
+        }
 
         self.load()
 
 
     def load(self):
-
-        if not self.path.exists():
+        if not CACHE_FILE.exists():
             return
 
         try:
             loaded = json.loads(
-                self.path.read_text(
+                CACHE_FILE.read_text(
                     encoding="utf-8"
-                ) or "{}"
+                )
             )
-        except json.JSONDecodeError:
+
+        except (
+            OSError,
+            json.JSONDecodeError
+        ):
             return
 
-        if isinstance(loaded, dict) and isinstance(loaded.get("items"), dict):
-            self.data = {
-                "version": loaded.get("version", DEFAULT_CACHE["version"]),
-                "items": loaded["items"]
-            }
+        if not isinstance(
+            loaded,
+            dict
+        ):
+            return
+
+        items = loaded.get(
+            "items"
+        )
+
+        if not isinstance(
+            items,
+            dict
+        ):
+            return
+
+        self.data = {
+            "version": loaded.get(
+                "version",
+                DEFAULT_CACHE["version"]
+            ),
+            "items": items
+        }
 
 
     def save(self):
-
-        self.path.parent.mkdir(
+        CACHE_FILE.parent.mkdir(
             parents=True,
             exist_ok=True
         )
 
-        self.path.write_text(
-
+        CACHE_FILE.write_text(
             json.dumps(
-
                 self.data,
-
                 indent=2,
-
                 ensure_ascii=False
-
             ),
-
             encoding="utf-8"
-
         )
 
 
@@ -70,8 +85,9 @@ class CacheManager:
         self,
         key
     ):
-
-        return self.data["items"].get(key)
+        return self.data[
+            "items"
+        ].get(key)
 
 
     def set(
@@ -79,23 +95,26 @@ class CacheManager:
         key,
         value
     ):
-
-        self.data["items"][key] = value
+        self.data[
+            "items"
+        ][key] = value
 
 
     def remove(
         self,
         key
     ):
-
-        self.data["items"].pop(
+        self.data[
+            "items"
+        ].pop(
             key,
             None
         )
 
 
     def keys(self):
-
         return set(
-            self.data["items"].keys()
+            self.data[
+                "items"
+            ].keys()
         )

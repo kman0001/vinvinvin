@@ -9,4 +9,4 @@ services:
 
     volumes:
       - ./config:/app/config
-      - ./your/local/images:/app/images
+      - /home/ubuntu/docker/php_alpine_8.2/images:/app/images
