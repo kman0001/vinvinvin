@@ -77,3 +77,39 @@ class GitHubStorage(Storage):
 
     def exists(self, destination: str) -> bool:
         return self._get_sha(destination) is not None
+
+    def get_file_content(
+        self,
+        destination: str
+    ):
+        url = (
+            f"{self._url(destination)}"
+            f"?ref={self.branch}"
+        )
+
+        with self._request(
+            "GET",
+            url
+        ) as response:
+
+            data = json.load(response)
+
+        import base64
+
+        return base64.b64decode(
+            data["content"]
+        )
+
+    def download(
+        self,
+        source,
+        destination
+    ):
+        content = self.get_file_content(
+            source
+        )
+
+        with destination.open(
+            "wb"
+        ) as f:
+            f.write(content)

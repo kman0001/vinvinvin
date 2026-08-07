@@ -255,31 +255,18 @@ def process_images(config):
         # ----------------------------------------------------------
         # 1. 동일 메뉴 + 동일 source
         #
-        # 이미 성공적으로 처리된 경우 모든 작업을 생략한다.
+        # 기존 처리 결과를 재사용할 수 있는지 판단한다.
+        #
+        # 실제 storage 재사용 여부는 image_hash 계산 후 결정된다.
         # ----------------------------------------------------------
 
-        if (
+        has_cached_item = (
             cached_item
-            and cached_item.get("status") == "success"
             and cached_item.get("source") == item.photo
             and cached_item.get("image_hash")
             and cached_destination
             and same_destination
-        ):
-            sync_engine.skip_item(
-                key=menu_hash,
-                category=item.category,
-                name=item.name,
-                source=item.photo,
-                cached_item=cached_item
-            )
-
-            print(
-                f"[INFO] Skipped unchanged image: {item.name}",
-                flush=True
-            )
-
-            continue
+        )
 
         # ----------------------------------------------------------
         # 2. 같은 category + 같은 source
@@ -307,6 +294,11 @@ def process_images(config):
                 category=item.category,
                 name=item.name,
                 source=item.photo,
+                source_type=(
+                    "url"
+                    if item.is_url
+                    else "local"
+                ),
                 image_hash=source_item["image_hash"],
                 filename=source_item["destination"],
                 source_key=source_key
@@ -398,18 +390,45 @@ def process_images(config):
                 )
 
                 # --------------------------------------------------
-                # 5. 이미지 처리
+                # 5. 기존 처리 이미지 재사용 확인
                 # --------------------------------------------------
 
-                output = process_image(
-                    source,
-                    item.category,
-                    temp_dir,
-                    filename
+                reusable = (
+                    sync_engine.find_reusable_image(
+                        image_hash
+                    )
                 )
 
                 # --------------------------------------------------
-                # 6. storage 동기화
+                # 6. 이미지 처리 또는 기존 결과 재사용
+                # --------------------------------------------------
+
+                if reusable:
+
+                    print(
+                        "[INFO] Reusing processed image: "
+                        f"{filename}",
+                        flush=True
+                    )
+
+                    output = (
+                        sync_engine.export_reusable_image(
+                            reusable,
+                            temp_dir
+                        )
+                    )
+
+                else:
+
+                    output = process_image(
+                        source,
+                        item.category,
+                        temp_dir,
+                        filename
+                    )
+
+                # --------------------------------------------------
+                # 7. storage 동기화
                 # --------------------------------------------------
 
                 result = sync_engine.sync_item(
@@ -417,6 +436,11 @@ def process_images(config):
                     category=item.category,
                     name=item.name,
                     source=item.photo,
+                    source_type=(
+                        "url"
+                        if item.is_url
+                        else "local"
+                    ),
                     image_hash=image_hash,
                     filename=filename,
                     output=output
@@ -448,7 +472,7 @@ def process_images(config):
             )
 
     # --------------------------------------------------------------
-    # 7. 현재 메뉴에 없는 cache 및 storage 파일 정리
+    # 8. 현재 메뉴에 없는 cache 및 storage 파일 정리
     # --------------------------------------------------------------
 
     sync_engine.remove_stale_items(

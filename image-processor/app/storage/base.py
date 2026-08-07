@@ -31,3 +31,10 @@ class Storage(ABC):
         destination: str
     ) -> bool:
         pass
+
+    def download(
+        self,
+        source,
+        destination
+    ):
+        raise NotImplementedError

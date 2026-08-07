@@ -54,3 +54,18 @@ class LocalStorage(Storage):
         return (
             self.base_path / destination
         ).exists()
+
+    def download(
+        self,
+        source,
+        destination
+    ):
+        source = (
+            self.base_path /
+            source
+        )
+
+        shutil.copy2(
+            source,
+            destination
+        )

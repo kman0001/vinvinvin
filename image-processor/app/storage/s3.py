@@ -56,3 +56,14 @@ class S3Storage(Storage):
             if exc.response.get("ResponseMetadata", {}).get("HTTPStatusCode") == 404:
                 return False
             raise
+
+    def download(
+        self,
+        source,
+        destination
+    ):
+        self.client.download_file(
+            self.bucket,
+            self._key(source),
+            str(destination)
+        )
